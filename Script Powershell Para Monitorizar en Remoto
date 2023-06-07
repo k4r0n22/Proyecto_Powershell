@@ -1,0 +1,1489 @@
+cls
+write-host "Ip del ordenador remoto"
+$ip=read-host
+
+$carpeta = New-Item -ItemType Directory -Name $ip -Force
+$carpeta
+
+Write-Host "----------------------------------------------"
+
+Write-Host "Se ha creado la carpeta $ip donde se guardarán los archivos que quiera ver del equipo en remoto"
+
+Write-Host "----------------------------------------------"
+#################################################
+
+##Client
+$port=2020
+$endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+$udpclient=new-Object System.Net.Sockets.UdpClient
+$b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('cls')"
+$bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+$udpclient.Close()
+
+#################################################
+
+##Client
+$port=2020
+$endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+$udpclient=new-Object System.Net.Sockets.UdpClient
+
+$nombre_Carpeta = Read-Host "Ingrese el nombre de la Carpeta Compartida"
+$ruta_Carpeta_Compartida = Read-Host "Ingrese la ruta donde se va a crear la Carpeta Compartida en el equipo remoto"
+EnviarComandoRemoto "New-SmbShare -Name $nombre_Carpeta -Path $ruta_Carpeta_Compartida -FullAccess todos"
+
+function EnviarComandoRemoto {
+    param (
+        [string]$comando
+    )
+
+    $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+    $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+}
+
+$udpclient.Close();
+
+#################################################
+
+Function showmenu {
+    Clear-Host
+    Write-Host "Starting Menu..."
+    Write-Host "1. Ver información del hardware"
+    Write-Host "2. Administrar la ejecución de los procesos"
+    Write-Host "3. Particionado del disco duro"
+    Write-Host "4. Crear Usuarios o Grupos"
+    Write-Host "5. Ver la configuración del protocolo TCP/IP"
+    Write-Host "6. Configuración de la resolución de nombres"
+    Write-Host "7. Configuración de red"
+    Write-Host "8. Permisos locales de acceso a ficheros y directorios"
+    Write-Host "9. Gestión de Sistema de archivos"
+    Write-Host "10. Copia de seguridad"
+    Write-Host "11. Comprimir o Descomprimir archivos"
+    Write-Host "12. Registros / Monitorización de sucesos"
+    Write-Host "13. Otro comando que quiera ejecutar"
+    Write-Host "0. Exit"
+}
+
+showmenu
+
+while(($inp = Read-Host -Prompt "Select an option") -ne "0"){
+
+switch($inp){
+        1  {
+            Clear-Host
+            Write-Host "------------------------------";
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+            $b=[Text.Encoding]::ASCII.GetBytes('
+                                    function hardware {
+                                        # Obtener información del hardware del ordenador
+                                        $cpu = Get-WmiObject Win32_Processor
+                                        $memory = Get-WmiObject Win32_PhysicalMemory
+                                        $disk = Get-WmiObject Win32_LogicalDisk
+
+                                        # Crear una variable para almacenar la salida
+                                        $output = ""
+
+                                        # Mostrar información del CPU
+                                        $output += "Información del CPU:`n"
+                                        $output += "Fabricante: $($cpu.Manufacturer)`n"
+                                        $output += "Modelo: $($cpu.Name)`n"
+                                        $output += "Número de núcleos: $($cpu.NumberOfCores)`n"
+                                        $output += "Número de hilos: $($cpu.NumberOfLogicalProcessors)`n"
+                                        $output += "Velocidad: $($cpu.MaxClockSpeed) MHz`n`n"
+
+                                        # Mostrar información de la memoria RAM
+                                        $output += "Información de la memoria RAM:`n"
+                                        $totalMemory = 0
+                                        foreach ($module in $memory)
+                                        {
+                                            $totalMemory += $module.Capacity
+                                        }
+                                        $totalMemoryGB = [math]::Round($totalMemory / 1GB, 2)
+                                        $output += "Total: $totalMemoryGB GB`n`n"
+
+                                        # Mostrar información del disco duro
+                                        $output += "Información del disco duro:`n"
+                                        foreach ($drive in $disk)
+                                        {
+                                            $driveSize = [math]::Round($drive.Size / 1GB, 2)
+                                            $freeSpace = [math]::Round($drive.FreeSpace / 1GB, 2)
+                                            $output += "Unidad: $($drive.DeviceID)`n"
+                                            $output += "Tamaño total: $driveSize GB`n"
+                                            $output += "Espacio libre: $freeSpace GB`n`n"
+                                        }
+
+                                        # Mostrar información de la tarjeta gráfica
+                                        $output += "Información de la tarjeta gráfica:`n"
+                                        $graphics = Get-WmiObject Win32_VideoController
+                                        foreach ($card in $graphics)
+                                        {
+                                            $output += "Fabricante: $($card.VideoProcessor)`n"
+                                            $output += "Nombre: $($card.Name)`n"
+                                            $output += "Memoria dedicada: $($card.AdapterRAM / 1MB) MB`n`n"
+                                        }
+
+                                        # Mostrar información de la placa base
+                                        $output += "Información de la placa base:`n"
+                                        $motherboard = Get-WmiObject Win32_BaseBoard
+                                        $output += "Fabricante: $($motherboard.Manufacturer)`n"
+                                        $output += "Modelo: $($motherboard.Product)`n`n"
+
+                                        # Mostrar información del sistema operativo
+                                        $output += "Información del sistema operativo:`n"
+                                        $os = Get-WmiObject Win32_OperatingSystem
+                                        $output += "Nombre: $($os.Caption)`n"
+                                        $output += "Versión: $($os.Version)`n"
+                                        $output += "Arquitectura: $($os.OSArchitecture)`n"
+
+                                        # Guardar la salida en un archivo de texto
+                                        $output | Out-File -FilePath "hardware.txt"
+                                    }
+
+                                    # Llamar a la función hardware
+                                    hardware')
+            $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 5
+            ###############################
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+
+            EnviarComandoRemoto "Move-Item -Path hardware.txt -Destination $ruta_Carpeta_Compartida"
+
+            function EnviarComandoRemoto {
+                param (
+                    [string]$comando
+                )
+
+                $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+            }
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 2
+            ###############################
+
+
+            function carpeta_caliente {
+
+                $rutac = "\\$ip\$nombre_Carpeta"
+
+                if((Get-ChildItem $rutac).Count -gt 0)
+                {
+                    foreach($cosa in Get-ChildItem $rutac)
+                    {
+                        Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                    }
+                }
+            }
+
+            carpeta_caliente
+
+            Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "hardware.txt");
+            Write-Host "------------------------------";
+            pause; 
+            break
+        }
+        2  {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function mostrar_menu {
+                Clear-Host
+                Write-Host "ADMINISTRACIÓN DE EJECUCIÓN DE PROCESOS"
+                Write-Host "--------------------------------------"
+                Write-Host "1. Ver los procesos en ejecución"
+                Write-Host "2. Iniciar un proceso"
+                Write-Host "3. Detener un proceso en ejecución"
+                Write-Host "4. Volver al Menú Principal"
+            }
+
+            mostrar_menu
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "4"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes('
+                                                    cls
+                                                    function ver_procesos {
+                                                        $procesos = Get-Process
+                                                        foreach ($process in $procesos) {
+                                                            "$($process.Name) --> ID: $($process.Id)"
+                                                        }
+                                                    }
+
+                                                    ver_procesos | Out-File -FilePath "procesos.txt"
+                        ')
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+
+                        Start-Sleep -Seconds 1
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path procesos.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                                                    param (
+                                                        [string]$comando
+                                                    )
+
+                                                    $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                                                    $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                                                }
+                        $udpclient.Close()
+
+                        Start-Sleep -Seconds 1
+
+
+                        function carpeta_caliente {
+
+                                                    $rutac = "\\$ip\$nombre_Carpeta"
+
+                                                    if((Get-ChildItem $rutac).Count -gt 0)
+                                                    {
+                                                        foreach($cosa in Get-ChildItem $rutac)
+                                                        {
+                                                            Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                                        }
+                                                    }
+                                                }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "procesos.txt");
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+
+                        $nombreProceso = Read-Host "Ingrese el nombre del proceso a iniciar"
+                        EnviarComandoRemoto "Start-Process $nombreProceso"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+
+                        $udpclient.Close();
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+
+                        $nombreProceso = Read-Host "Ingrese el nombre del proceso a detener"
+                        EnviarComandoRemoto "Get-Process -Name $nombreProceso | Stop-Process"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    4 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            mostrar_menu
+            };
+            Write-Host "------------------------------"; 
+            pause;
+            break
+        }
+        3  {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function mostrar_menu_ {
+                Clear-Host
+                Write-Host "PARTICIONADO DE DISCOS"
+                Write-Host "--------------------------------------"
+                Write-Host "1. Particionar"
+                Write-Host "2. Desfragmentar"
+                Write-Host "3. Convertir sistemas de archivo"
+                Write-Host "4. Cifrar"
+                Write-Host "5. Descifrar"
+                Write-Host "6. Volver al Menú Principal"
+            }
+
+            mostrar_menu_
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "6"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $number = Read-Host "Inserte el número del disco"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('New-Partition -DiskNumber $number -UseMaximumSize -AssignDriveLetter')"
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();   
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $letra = Read-Host "Inserte la Letra del disco"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('Optimize-Volume $letra -Defrag')"
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $letra = Read-Host "Inserte la Letra del disco"
+                        $tipo = Read-Host "Que formato desea"                    
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('Format-Volume -DriveLetter $letra -FileSystem $tipo')"
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    4 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $letra = Read-Host "Inserte la Letra del disco"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('Enable-BitLocker -MountPoint $letra -RecoveryPasswordProtector -UsedSpaceOnly -Verbose')"
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    5 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $letra = Read-Host "Inserte la Letra del disco"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=Invoke-Expression -Command "[Text.Encoding]::ASCII.GetBytes('Disable-BitLocker -MountPoint $letra')"
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    6 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            mostrar_menu_
+            };
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        4  {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function menu {
+                Clear-Host
+                Write-Host "CREAR USUARIOS O GRUPOS"
+                Write-Host "--------------------------------------"
+                Write-Host "1. Crear un usuario"
+                Write-Host "2. Eliminar un usuario"
+                Write-Host "3. Crear un grupo"
+                Write-Host "4. Ver los miembros de un grupo"
+                Write-Host "5. Eliminar un grupo"
+                Write-Host "6. Volver al Menú principal"
+            }
+
+            menu
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "6"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $usuario = Read-Host "Introduzca el nombre del usuario"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("New-LocalUser -Name $usuario -NoPassword")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $usuario = Read-Host "Introduzca el nombre del usuario"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Remove-LocalUser -Name $usuario")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $grupo = Read-Host "Introduzca el nombre del grupo"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("New-LocalGroup -Name $grupo")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    4 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $grupo = Read-Host "Introduzca el nombre del grupo"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Get-LocalGroupMember -Name $grupo")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    5 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $grupo = Read-Host "Introduzca el nombre del grupo"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Remove-LocalGroup -Name $grupo")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    6 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            menu
+            } 
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        5  {
+            Clear-Host
+            Write-Host "------------------------------";
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+            $b=[Text.Encoding]::ASCII.GetBytes('
+            function tcp_ip {
+
+                New-Item -ItemType Directory -Name tcp_ip
+
+                function capa1 {
+    
+                    New-Item -ItemType Directory -Name capa1 -Path "tcp_ip\"
+
+                    # Capa 1: Conocer los interfaces fisicos
+                    $interfacesfisicos = Get-NetAdapter -Physical | Select-Object Name, MacAddress
+                    $interfacesfisicos | Out-File -FilePath "tcp_ip\capa1\interfaces_fisicos.txt"
+
+                    # Capa 1: Bytes recibidos y transmitidos
+                    $Bytes = Get-NetAdapterStatistics
+                    $Bytes | Out-File -FilePath "tcp_ip\capa1\Bytes.txt"
+
+                }
+                capa1
+
+                function capa2 {
+    
+                    New-Item -ItemType Directory -Name capa2 -Path "tcp_ip\"
+
+                    # Capa 2: Obtener la dirección MAC
+                    $Tabla_arp = arp -a | Select-String "((?:(\d{1,2}|[a-fA-F]{1,2}){2})(?::|-*)){6}" | Select-String "192.168"
+                    $Tabla_arp | Out-File -FilePath "tcp_ip\capa2\Tabla_arp.txt"
+
+                    $netNeighbors = Get-NetNeighbor | Select-Object IPAddress
+                    $netNeighbors | Out-File -FilePath "tcp_ip\capa2\netNeighbors.txt"
+
+                }
+                capa2
+
+                function capa3 {
+    
+                    New-Item -ItemType Directory -Name capa3 -Path "tcp_ip\"
+
+                    # Capa 3: Obtener la información de IP
+                    $ip_info = Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress
+                    $ip_info | Out-File -FilePath "tcp_ip\capa3\ip_info.txt"
+
+                    $routes = Get-NetRoute
+                    $routes | Out-File -FilePath "tcp_ip\capa3\routes.txt"
+
+                }
+                capa3
+
+                function capa4 {
+
+                    New-Item -ItemType Directory -Name capa4 -Path "tcp_ip\"
+
+                    # Capa 4: Realizar conexiones TCP/UDP
+                    $tcpConnections = Get-NetTCPConnection | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State
+                    $tcpConnections | Out-File -FilePath "tcp_ip\capa4\tcpConnections.txt"
+
+                    $udpEndpoints = Get-NetUDPEndpoint | Select-Object LocalAddress, LocalPort
+                    $udpEndpoints | Out-File -FilePath "tcp_ip\capa4\udpEndpoints.txt"
+
+                    # Capa 4: Verificar puertos abiertos según IANA
+                    $tcpPorts = (Get-NetTCPConnection).LocalPort
+                    $udpPorts = (Get-NetUDPEndpoint).LocalPort
+
+                    $ianaPorts = Invoke-RestMethod -Uri "http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml"
+                    $tcpPortsInfo = $ianaPorts.xml.registry.record |
+                        Where-Object { $_.protocol -eq "tcp" -and $tcpPorts -contains $_.number } |
+                        Select-Object -Property service, description, number
+
+                    $udpPortsInfo = $ianaPorts.xml.registry.record |
+                        Where-Object { $_.protocol -eq "udp" -and $udpPorts -contains $_.number } |
+                        Select-Object -Property service, description, number
+
+                    $tcpPortsInfo | Out-File -FilePath "tcp_ip\capa4\tcpPortsInfo.txt"
+                    $udpPortsInfo | Out-File -FilePath "tcp_ip\capa4\udpPortsInfo.txt"
+                }
+                capa4
+
+                function capa7 {
+
+                    New-Item -ItemType Directory -Name capa7 -Path "tcp_ip\"
+
+                    # Capa 7: Obtener la IP pública
+                    $ip_Publica = Invoke-RestMethod -Uri "http://ifconfig.me/ip"
+                    $ip_Publica | Out-File -FilePath "tcp_ip\capa7\ip_Publica.txt"
+                }
+                capa7
+
+            }
+
+            tcp_ip
+            ')
+            $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 30
+            ###############################
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+
+            EnviarComandoRemoto "Move-Item -Path 'tcp_ip' -Destination $ruta_Carpeta_Compartida"
+
+
+            function EnviarComandoRemoto {
+                param (
+                    [string]$comando
+                )
+
+                $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+            }
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 1
+            ###############################
+
+            function carpeta_caliente {
+
+                $rutac = "\\$ip\$nombre_Carpeta"
+
+                if((Get-ChildItem $rutac).Count -gt 0)
+                {
+                    foreach($cosa in Get-ChildItem $rutac)
+                    {
+                        Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                    }
+                }
+            }
+
+            carpeta_caliente
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip")
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip" + "\" + "capa1")
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip" + "\" + "capa2")
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip" + "\" + "capa3")
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip" + "\" + "capa4")
+            ls ((Get-Location).Path + "\" +($carpeta).Name + "\" + "tcp_ip" + "\" + "capa7");
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        6  {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function _ver_menu_ {
+                Clear-Host
+                Write-Host "CONFIGURACIÓN DE LA RESOLUCIÓN DE NOMBRES"
+                Write-Host "-----------------------------------------"
+                Write-Host "1. Obtener la configuración actual de los servidores DNS"
+                Write-Host "2. Configurar servidores DNS estáticos"
+                Write-Host "3. Restablecer servidores DNS utilizando DHCP"
+                Write-Host "4. Volver al Menú Principal"
+            }
+
+            _ver_menu_
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "4"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Get-DnsClientServerAddress| Out-File -FilePath 'dns_actual.txt'")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 5
+                        ###############################
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path dns_actual.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 4
+                        ###############################
+
+
+                        function carpeta_caliente {
+
+                            $rutac = "\\$ip\$nombre_Carpeta"
+
+                            if((Get-ChildItem $rutac).Count -gt 0)
+                            {
+                                foreach($cosa in Get-ChildItem $rutac)
+                                {
+                                    Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                }
+                            }
+                        }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "dns_actual.txt");
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        # Solicitar los servidores DNS estáticos al usuario
+                        $dns1 = Read-Host "Ingrese la dirección IP del primer servidor DNS"
+                        $dns2 = Read-Host "Ingrese la dirección IP del segundo servidor DNS"
+
+                        $NombreInterfaz = "Inserte el Nombre de la Interfaz de red en la que deseas configurar los servidores DNS"
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Set-DnsClientServerAddress -InterfaceAlias $NombreInterfaz -ServerAddresses ($dns1, $dns2)")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+
+                        Write-Host "La configuración de servidores DNS estáticos ha sido actualizada.";
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+
+                        $NombreInterfaz = "Inserte el Nombre de la Interfaz de red en la que deseas configurar los servidores DNS"
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Set-DnsClientServerAddress -InterfaceAlias $NombreInterfaz -ResetServerAddresses")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    4 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            _ver_menu_
+            };
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        7  {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function ver_menu_ {
+                Clear-Host
+                Write-Host "CONFIGURACIÓN DE RED"
+                Write-Host "--------------------------------------"
+                Write-Host "1. Ver Dirección IP"
+                Write-Host "2. Ver las interfaces de red disponibles"
+                Write-Host "3. Hacer ping a otra dirección IP"
+                Write-Host "4. Cambiar Dirección IP"
+                Write-Host "5. Volver al Menú Principal"
+            }
+
+            ver_menu_
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "5"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes('ipconfig | Out-File -FilePath "direccion_ip.txt"')
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path direccion_ip.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+
+                        function carpeta_caliente {
+
+                            $rutac = "\\$ip\$nombre_Carpeta"
+
+                            if((Get-ChildItem $rutac).Count -gt 0)
+                            {
+                                foreach($cosa in Get-ChildItem $rutac)
+                                {
+                                    Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                }
+                            }
+                        }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "direccion_ip.txt");
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes('Get-NetAdapter | Out-File -FilePath "interfaces_red.txt"')
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path interfaces_red.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+
+                        function carpeta_caliente {
+
+                            $rutac = "\\$ip\$nombre_Carpeta"
+
+                            if((Get-ChildItem $rutac).Count -gt 0)
+                            {
+                                foreach($cosa in Get-ChildItem $rutac)
+                                {
+                                    Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                }
+                            }
+                        }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "interfaces_red.txt");
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $ip2 = Read-Host "Inserte la Dirección Ip a la que quiera hacerle ping"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("ping $ip2 | Out-File -FilePath 'resultado_ping.txt'")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+
+                        ###############################
+                        Start-Sleep -Seconds 5
+                        ###############################
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path resultado_ping.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+
+                        function carpeta_caliente {
+
+                            $rutac = "\\$ip\$nombre_Carpeta"
+
+                            if((Get-ChildItem $rutac).Count -gt 0)
+                            {
+                                foreach($cosa in Get-ChildItem $rutac)
+                                {
+                                    Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                }
+                            }
+                        }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "resultado_ping.txt");
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    4 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+            
+                        $Nombre_Interfaz = Read-Host "Inserte el Nombre de la Interfaz"
+                        $Nueva_IP = Read-Host "Inserte la Nueva Dirección IP"
+                        $Nueva_Mascara = Read-Host "Inserte la Nueva Máscara"
+                        $Nueva_Puerta_Enlace = Read-Host "Inserte la Nueva Puerta de Enlace"
+            
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("New-NetIPAddress -InterfaceAlias $Nombre_Interfaz -IPAddress $Nueva_IP -PrefixLength $Nueva_Mascara -DefaultGateway $Nueva_Puerta_Enlace")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+
+                        Write-Host "La Dirección IP se ha configurado correctamente"
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    5 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            ver_menu_
+            };
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        8  {
+            Clear-Host
+            Write-Host "------------------------------";
+# Ruta del archivo o directorio
+$ruta = Read-Host "Inserte la ruta del archivo o directorio"
+
+##Client
+$port = 2020
+$endpoint = New-Object System.Net.IPEndPoint([IPAddress]$ip, $port)
+$udpclient = New-Object System.Net.Sockets.UdpClient
+
+EnviarComandoRemoto @"
+    `$permisos = Get-Acl -Path '$ruta'
+    `$output = @()
+    `$output += 'Permisos para ' + '$ruta' + ':'
+    foreach (`$ace in `$permisos.Access) {
+        `$nombreUsuario = `$ace.IdentityReference
+        `$permisosAcceso = `$ace.FileSystemRights
+        `$tipoPermisos = `$ace.AccessControlType
+
+        `$output += 'Usuario: ' + `$nombreUsuario
+        `$output += 'Permisos de acceso: ' + `$permisosAcceso
+        `$output += 'Tipo de permisos: ' + `$tipoPermisos
+        `$output += '--------------------------'
+    }
+
+    `$output | Out-File -FilePath 'permisos_locales.txt'
+"@
+
+function EnviarComandoRemoto {
+    param (
+        [string]$comando
+    )
+
+    $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+    $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+}
+
+$udpclient.Close()
+
+###############################
+Start-Sleep -Seconds 2
+###############################
+
+##Client
+$port=2020
+$endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+$udpclient=new-Object System.Net.Sockets.UdpClient
+
+EnviarComandoRemoto "Move-Item -Path permisos_locales.txt -Destination $ruta_Carpeta_Compartida"
+
+function EnviarComandoRemoto {
+    param (
+        [string]$comando
+    )
+
+    $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+    $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+}
+$udpclient.Close()
+
+###############################
+Start-Sleep -Seconds 2
+###############################
+
+
+function carpeta_caliente {
+
+    $rutac = "\\$ip\$nombre_Carpeta"
+
+    if((Get-ChildItem $rutac).Count -gt 0)
+    {
+        foreach($cosa in Get-ChildItem $rutac)
+        {
+            Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+        }
+    }
+}
+
+carpeta_caliente
+
+Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "permisos_locales.txt");
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        9 {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function _menu_ {
+                Clear-Host
+                Write-Host "SISTEMA DE ARCHIVOS"
+                Write-Host "--------------------------------------"
+                Write-Host "1. Listar archivos"
+                Write-Host "2. Crear Archivo o Directorio"
+                Write-Host "3. Abrir"
+                Write-Host "4. Eliminar"
+                Write-Host "5. Volver al Menú Principal"
+            }
+
+            _menu_
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "5"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes('Get-ChildItem | Out-File -FilePath "archivos.txt"')
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close()
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+
+                        EnviarComandoRemoto "Move-Item -Path archivos.txt -Destination $ruta_Carpeta_Compartida"
+
+                        function EnviarComandoRemoto {
+                            param (
+                                [string]$comando
+                            )
+
+                            $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                            $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+                        }
+                        $udpclient.Close()
+
+                        ###############################
+                        Start-Sleep -Seconds 2
+                        ###############################
+
+
+                        function carpeta_caliente {
+
+                            $rutac = "\\$ip\$nombre_Carpeta"
+
+                            if((Get-ChildItem $rutac).Count -gt 0)
+                            {
+                                foreach($cosa in Get-ChildItem $rutac)
+                                {
+                                    Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                                }
+                            }
+                        }
+
+                        carpeta_caliente
+
+                        Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "archivos.txt");
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $tipo = Read-Host "Inserte que tipo de archivo desea crear (File o Directory)"
+                        $nombre = Read-Host "Inserte el nombre del $tipo"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("New-Item -ItemType $tipo -Name $nombre")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------"; 
+                        pause;
+                        break
+                    }
+                    3 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $name = Read-Host "Inserte el nombre del archivo que desea abrir"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("start $name")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    4 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        $n0mbre = Read-Host "Inserte el nombre del archivo que desea eliminar"
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Remove-Item $n0mbre")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    5 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            _menu_
+            };
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        10 {
+            Clear-Host
+            Write-Host "------------------------------";
+            $ruta = Read-Host "Ingrese la ruta del archivo al que desea hacer la copia de seguridad"
+            $ruta_destino = Read-Host "Ingrese la ruta donde se va a hacer la copia de seguridad"
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+            $b=[Text.Encoding]::ASCII.GetBytes("Copy-Item -Path $ruta -Destination $ruta_destino")
+            $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+            $udpclient.Close(); 
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        11 {
+            Clear-Host
+            Write-Host "------------------------------";
+            Function vermenu {
+                Clear-Host
+                Write-Host "COMPRIMIR O DESCOMPRIMIR ARCHIVOS"
+                Write-Host "------------------------------"
+                Write-Host "1. Comprimir"
+                Write-Host "2. Descomprimir"
+                Write-Host "3. Volver al Menú principal"
+            }
+
+            vermenu
+
+            while(($inp = Read-Host -Prompt "Select an option") -ne "3"){
+
+            switch($inp){
+                    1 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        # Comprimir Archivo
+                        $ruta_comprimir = Read-Host "Ingrese la ruta del archivo que quiera Comprimir"
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Compress-Archive -LiteralPath $ruta_comprimir -CompressionLevel Optimal -DestinationPath '$ruta_comprimir.zip'")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close(); 
+                        Write-Host "------------------------------";
+                        pause;
+                        break
+                    }
+                    2 {
+                        Clear-Host
+                        Write-Host "------------------------------";
+                        #Descomprimir Archivo
+                        $ruta_descomprimir = Read-Host "Ingrese la ruta del archivo que quiera Descomprimir"
+
+                        ##Client
+                        $port=2020
+                        $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+                        $udpclient=new-Object System.Net.Sockets.UdpClient
+                        $b=[Text.Encoding]::ASCII.GetBytes("Expand-Archive -LiteralPath $ruta_descomprimir")
+                        $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+                        $udpclient.Close();
+                        Write-Host "------------------------------";
+                        pause; 
+                        break
+                    }
+                    3 {"Exit"; break}
+                    default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+                }
+
+            vermenu
+            };
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        12 {
+            Clear-Host
+            Write-Host "------------------------------";
+            $nombre_evento = Read-Host "Ingrese el nombre del evento ( Application, Security, System,...)"
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+            $b=[Text.Encoding]::ASCII.GetBytes('
+            New-Item -ItemType Directory -Name eventos
+
+            # Función para obtener y mostrar los eventos de un registro
+            function MostrarEventos {
+                param (
+                    [string]$registro
+                )
+                $eventos = Get-WinEvent -LogName $registro -MaxEvents 10
+
+                "Eventos en el registro $registro :"
+                foreach ($evento in $eventos) {
+                    "-----------------------------------------------------"
+                    "ID de evento: $($evento.Id)"
+                    "Origen: $($evento.ProviderName)"
+                    "Fecha y hora: $($evento.TimeCreated)"
+                    "Mensaje: $($evento.Message)"
+                    "-----------------------------------------------------"
+                }
+            }
+
+            MostrarEventos -registro $nombre_evento | Out-File -FilePath "eventos\evento.txt"')
+            $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 5
+            ###############################
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+
+            EnviarComandoRemoto "Move-Item -Path 'eventos' -Destination $ruta_Carpeta_Compartida"
+
+
+            function EnviarComandoRemoto {
+                param (
+                    [string]$comando
+                )
+
+                $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+            }
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 1
+            ###############################
+
+            function carpeta_caliente {
+
+                $rutac = "\\$ip\$nombre_Carpeta"
+
+                if((Get-ChildItem $rutac).Count -gt 0)
+                {
+                    foreach($cosa in Get-ChildItem $rutac)
+                    {
+                        Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                    }
+                }
+            }
+
+            carpeta_caliente;
+            break
+        }
+        13 {
+            Clear-Host
+            Write-Host "------------------------------";
+            $comando = Read-Host "Inserte el comando que quiera ejecutar" 
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+            $b=[Text.Encoding]::ASCII.GetBytes("$comando | Out-File -FilePath 'resultado_comando.txt'")
+            $bytesSent=$udpclient.Send($b,$b.length,$endpoint)
+            $udpclient.Close()
+            
+            ###############################
+            Start-Sleep -Seconds 5
+            ###############################
+
+            ##Client
+            $port=2020
+            $endpoint = new-object System.Net.IPEndPoint ([IPAddress]$ip,$port)
+            $udpclient=new-Object System.Net.Sockets.UdpClient
+
+            EnviarComandoRemoto "Move-Item -Path resultado_comando.txt -Destination $ruta_Carpeta_Compartida"
+
+            function EnviarComandoRemoto {
+                param (
+                    [string]$comando
+                )
+
+                $bytes = [Text.Encoding]::ASCII.GetBytes($comando)
+                $bytesSent = $udpclient.Send($bytes, $bytes.Length, $endpoint)
+            }
+            $udpclient.Close()
+
+            ###############################
+            Start-Sleep -Seconds 2
+            ###############################
+
+
+            function carpeta_caliente {
+
+                $rutac = "\\$ip\$nombre_Carpeta"
+
+                if((Get-ChildItem $rutac).Count -gt 0)
+                {
+                    foreach($cosa in Get-ChildItem $rutac)
+                    {
+                        Move-Item -Path $cosa.FullName -Destination ((Get-Location).Path + "\" +($carpeta).Name)
+                    }
+                }
+            }
+
+            carpeta_caliente
+
+            Get-Content ((Get-Location).Path + "\" +($carpeta).Name + "\" + "resultado_comando.txt");
+            Write-Host "------------------------------";
+            pause;
+            break
+        }
+        0 {"Exit"; break}
+        default {Write-Host -ForegroundColor red -BackgroundColor white "Invalid option. Please select another option";pause}
+        
+    }
+
+showmenu
+}
